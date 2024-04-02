@@ -4,6 +4,11 @@ library(xml2)
 library(rvest)
 library(stringr)
 
+toggle_names = c('Activities', 'Restriction', 'Credit', 'Grade', 'Education')
+
+# Functions ---------------------------------------------------------------
+
+
 create_xpath = function(type, contains, label='class', current=TRUE) {
   
   xpath_str = paste0("//", type, "[contains(@", label, ", '", contains, "')]")
@@ -47,44 +52,118 @@ strip = function(x, start, end) {
   
 }
 
-strip_all = function(x, start, end) {
+strip_all = function(x, start='<', end='>') {
   
   chr = as.character(x)
   
   nstart = str_locate_all(chr, start) |> 
-    sapply(nrow) |>
-    unique()
+    sapply(nrow)
   
   nend = str_locate_all(chr, end) |>
-    sapply(nrow) |>
-    unique()
+    sapply(nrow)
   
-  if (length(nstart) > 1 | length(nend) > 1) {
-    stop("there must be the same number of start/end strings in each character.")
-  }
 
-  if (nstart!=nend) {
+  if (!identical(nstart,nend)) {
     stop("There are a different number of start strings than end strings.")
   }
   
-  for (i in 1:nstart) {
-    chr = strip(chr, start, end)
+  for (i in 1:length(chr)) {
+    for (j in 1:nstart[i]) {
+      chr[i] = strip(chr[i], start, end)
+    }
   }
-
   
   return(chr)
 }
 
-parse_toggle = function(x, pattern, start, end, na_value=NA) {
+
+toggle_groups = function(x, grp_names) {
   
-  grps = html_elements(x, css='em')
+  grps_list = lapply(x, function(block) {
+    html_elements(block, css='em') |>
+      strip_all(start='<', end='>') 
+  })
   
-  x = as.character(x)
+  mat = sapply(grp_names, function(name) {
+    sapply(grps_list, function(gl) {
+      any(str_detect(gl, name))
+    })
+  })
   
-  is_present = str_detect(x, pattern)
+  df = data.frame(mat)
   
-  ifelse(is_present, extract_info(x, start , end), na_value)
+  return(df)
 }
+
+extract_text = function(x, key) {
+  
+  chr = as.character(x) 
+  
+  chr = str_split_1(chr, key)
+  
+  chr = str_split_1(chr[2], '</span> ')
+  chr = str_split_1(chr[2], ".</li>")
+  chr = str_replace_all(chr[1], 'amp;', '')
+  
+  return(chr)
+  
+}
+
+
+parse_toggle = function(x, group_names) {
+  
+  n = length(x)
+  
+  grps = toggle_groups(x, group_names)
+  
+
+  text = sapply(group_names, function(col_name) {
+    
+    sapply(1:n, function(i) {
+      if (grps[[col_name]][i]) {
+        x = extract_text(x[i], col_name) 
+        
+        ifelse(grepl('<', x), strip_all(x), x)
+      } else {
+        NA
+      }
+    })
+    
+  })
+  
+  return(data.frame(text))
+  
+}
+
+parse_activities = function(chr, activity) {
+  start = str_locate(chr, activity)[, 2]
+  
+  hrs = str_sub(chr, start+2, start+2) |> as.numeric()
+  
+  hrs[is.na(hrs)] = 0
+  
+  return(hrs)
+}
+
+parse_prereqs = function(x, course) {
+  
+  chr = strip_all(x, '<', '>') |>
+    str_replace_all(' C- or better', '')
+  
+  chr = gsub("Prerequisite(s): ", "", chr, fixed=TRUE)
+  
+  course_vec = str_split_1(chr, ";") |>
+    trimws() |>
+    
+  
+  concurrent = grepl('concurrent', course_vec)
+  
+  course_list = lapply(course_vec, function(vec) {
+    str_split_1(vec, 'or')
+  })
+}
+
+# Extract general info ----------------------------------------------------
 
 
 catalog_url = "https://catalog.ucdavis.edu/courses-subject-code/"
@@ -108,15 +187,17 @@ dept_abbr = str_split_i(dept_strings, " \\(", i=2) |>
   str_replace_all("[^A-Z]", "")
 
 
-url =  "https://catalog.ucdavis.edu/courses-subject-code/eae/"
+# Extract course info -----------------------------------------------------
+
+url =  "https://catalog.ucdavis.edu/courses-subject-code/phy/"
 
 pg = read_html(url)
 
 #college
 
 college = xml_find_all(pg, "//span[contains(@class, 'title-college')]") |>
- extract_info()
-
+  extract_info() |>
+  str_replace_all('amp;', '')
 
 #courses
 
@@ -155,7 +236,8 @@ units = html_elements(pg, xpath=units_xpath) |>
 
 #extract course description
 desc = html_elements(pg, xpath=desc_xpath) |>
-  extract_info("</em> ", "</p>")
+  #extract_info("</em> ", "</p>") |>
+  strip_all('<', '>')
 
 prereqs = sapply(courses, function(course) {
   x = html_elements(course, xpath=prereq_xpath)
@@ -169,18 +251,11 @@ tgls = html_elements(courses, xpath=tgl_xpath) |>
   html_elements('ul') 
 
 
-test = html_elements(tgls[14], css='em') |>
-  strip_all(start='<', end='>')
+tgl_df = parse_toggle(tgls, toggle_names)
 
-lab_hrs = parse_toggle(tgls, 'Laboratory', ' Laboratory', ' hour', 0) |>
-  as.integer() 
-
-gen_ed = parse_toggle(tgls, 'General Education', ' Education:</em></span> ', 
-                      '.</li>', NA) |>
-  str_replace('amp;', '')
-
-
-html_elements(test, xpath="//span[contains(@class, 'detail-code')]")
+tgl_df$Lab = parse_activities(tgl_df$Activities, 'Laboratory')
+tgl_df$Lecture = parse_activities(tgl_df$Activities, 'Lecture')
+tgl_df$Discussion = parse_activities(tgl_df$Activities, 'Discussion')
 
 
 la2 = xml_find_all(pg, "//p[contains(@class, 'courseblockextra')]")
