@@ -21,10 +21,11 @@ desc_long = merge(desc_long, recode_cats, by='raw_label', all.x = TRUE)
 
 
 desc = dcast(desc_long, cn ~ label, value.var = 'content')
+setnames(desc, names(desc), tolower(names(desc)))
 
-
+course_desc = subset(desc, select=-grade)
 # write description data --------------------------------------------------
 
 fwrite(desc, 'data/course_descriptions.csv')
 
-
+fwrite(course_desc, 'data/tables/course_description.csv')
