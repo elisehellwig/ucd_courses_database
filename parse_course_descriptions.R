@@ -4,6 +4,8 @@ library('stringr')
 library('sqldf')
 
 source('functions.R')
+#import_courses
+#parse_description
 
 course_fn = 'data/Banner_ActiveCourses_descriptions_20240510.xlsx'
 
