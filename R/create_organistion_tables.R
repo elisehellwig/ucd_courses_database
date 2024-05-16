@@ -18,7 +18,8 @@ depts = course[, .(dept, dept_name )] |>
 
 setorderv(depts, cols='dept')
 
-depts[, dept_id := 1:nrow(depts)]
+depts[, ":="(dept_id = 1:nrow(depts),
+             grad_group = grepl('GG$', dept_name))]
 
 setcolorder(depts, 'dept_id')
 
