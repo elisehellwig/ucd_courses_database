@@ -4,11 +4,14 @@ library('stringr')
 library('sqldf')
 
 source('functions.R')
+#import_courses
 #str_multi_replace
 #strsplit_vector
 #remove_duplicates
 
 desc = fread('data/course_descriptions.csv')
+
+course = import_courses()
 
 # Create GE table ---------------------------------------------------------
 
@@ -44,7 +47,9 @@ ge_query <- paste("SELECT cn, ge_id FROM desc_ge INNER JOIN GEs",
 
 ge_course = sqldf(ge_query) |> data.table()
 
-fwrite(ge_course, 'data/tables/ge_course.csv')
+ge_course[,course_ge_id:= 1:nrow(ge_course)]
+
+fwrite(ge_course, 'data/tables/course_ge.csv')
 
 # ge_course = fuzzy_join(desc_ge, GEs, by= c('Gen_Ed' = 'ge_name'), 
 #                        match_fun = str_detect, mode='inner') 
@@ -108,7 +113,7 @@ fwrite(act_course, 'data/tables/course_activity.csv')
 
 cl_replace = data.table(string=c(';', '\\.$'), replacement=c(', ', ''))
 
-cl_wide = desc[!is.na(Cross_Listing), .(cn, Cross_Listing)]
+cl_wide = desc[Cross_Listing!='', .(cn, Cross_Listing)]
 
 cl_wide[, Cross_Listing:=toupper(Cross_Listing)]
 
@@ -117,30 +122,37 @@ cl_wide[, Cross_Listing:=str_multi_replace(Cross_Listing, cl_replace)]
 cl = lapply(1:nrow(cl_wide), function(i) {
   cn_vec = str_split_1(cl_wide$Cross_Listing[i], ', ')
   
-  data.table(cn=cl_wide$cn[i], Cross_Listing = cn_vec)
+  data.table(cn=cl_wide$cn[i], crosslisted_cn = cn_vec)
 }) |> rbindlist()
 
-cl[, Cross_Listing:=gsub(' ', '', Cross_Listing)]
+cl[, crosslisted_cn:=gsub(' ', '', crosslisted_cn)]
 
+setorderv(cl)
+
+cl[, crosslist_id:= 1:nrow(cl)]
+
+setcolorder(cl, 'crosslist_id')
+
+fwrite(cl, 'data/tables/course_crosslist.csv')
 
 # Prerequisities Table ----------------------------------------------------
 
-course[, c_n:= paste(Subject, Number)]
+course[, c_n:= paste(subject, number)]
 cns = course[, .(cn, c_n)]
-setnames(cns, names(cns), paste0('pr_', names(cns)))
+setnames(cns, names(cns), paste0('prereq_', names(cns)))
 
-desc[, ":="(instructor_consent = grepl('consent', tolower(Prerequisites)),
-            upper_division = grepl('upper division', tolower(Prerequisites)),
-            graduate = grepl('graduate', tolower(Prerequisites)))]
+desc_prereq = desc[Prerequisites!='', .(cn, Prerequisites)]
 
-desc_prereq = desc[!is.na(Prerequisites), .(cn, Prerequisites)]
-
-prereq_query = paste("SELECT cn, pr_cn FROM desc_prereq INNER JOIN cns",
-                     "ON Prerequisites LIKE CONCAT('%', pr_c_n, '%');")
+prereq_query = paste("SELECT cn, prereq_cn FROM desc_prereq INNER JOIN cns",
+                     "ON Prerequisites LIKE CONCAT('%', prereq_c_n, '%');")
 
 course_prereq = sqldf(prereq_query) |> data.table()
 
+setorderv(course_prereq)
 
+course_prereq[, prereq_id:=1:nrow(course_prereq)]
 
+setcolorder(course_prereq, 'prereq_id')
 
+fwrite(course_prereq, 'data/tables/course_prerequisite.csv')
 
