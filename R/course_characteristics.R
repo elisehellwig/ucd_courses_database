@@ -14,8 +14,8 @@ desc = fread('data/course_descriptions.csv')
 
 # Create Grade table ------------------------------------------------------
 
-grade_desc = desc[, .(cn, Grade)]
-setnames(grade_desc, 'Grade', 'grade_raw')
+grade_desc = desc[, .(cn, grade)]
+setnames(grade_desc, 'grade', 'grade_raw')
 
 grades = recode_grade[, 'grade'] |>
   unique() 

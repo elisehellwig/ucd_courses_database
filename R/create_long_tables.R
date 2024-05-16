@@ -17,7 +17,7 @@ course = import_courses()
 
 ge_replace = data.table(string=c('\\),', ' or '), replacement=c('\\);', '; '))
 
-GEs = desc$Gen_Ed[!is.na(desc$Gen_Ed)] |>
+GEs = desc$gen_ed[!is.na(desc$gen_ed)] |>
   str_multi_replace(ge_replace) |>
   strsplit_vector(';') |>
   str_replace_all('\\.', '') |>
@@ -40,10 +40,10 @@ fwrite(GEs, 'data/tables/ge.csv')
 # Create GE course table --------------------------------------------------
 
 
-desc_ge = desc[ , .(cn, Gen_Ed)]
+desc_ge = desc[ , .(cn, gen_ed)]
 
 ge_query <- paste("SELECT cn, ge_id FROM desc_ge INNER JOIN GEs",
-                  "ON Gen_Ed LIKE CONCAT('%', ge_name, '%');")
+                  "ON gen_ed LIKE CONCAT('%', ge_name, '%');")
 
 ge_course = sqldf(ge_query) |> data.table()
 
@@ -62,7 +62,7 @@ fwrite(ge_course, 'data/tables/course_ge.csv')
 act_misspell = data.table(string=c('Discusson', 'Intership'), 
                           replacement=c('Discussion', 'Internship'))
 
-desc[, Activities:= str_multi_replace(Activities, act_misspell)]
+desc[, activities:= str_multi_replace(activities, act_misspell)]
 
 # Create Learning Activities Table ----------------------------------------
 
@@ -73,7 +73,7 @@ act_remove = c('hour\\(s\\)', 'hour\\(s\\(', 'hour \\(s\\)', 'hours\\(s\\)',
 act_replace = data.table(string=c(act_remove, '\\s\\s+'), 
                          replacement = c(rep('', length(act_remove)), ' '))
 
-acts = desc$Activities[!is.na(desc$Activities)] |>
+acts = desc$activities[!is.na(desc$activities)] |>
   tolower() |>
   strsplit_vector('[,;\\] ') |>
   strsplit_vector('/') |>
@@ -99,7 +99,7 @@ fwrite(learning_activity, 'data/tables/learning_activity.csv')
 
 act_query <- paste("SELECT cn, activity_id ",
                    "FROM desc INNER JOIN learning_activity",
-                   "ON LOWER(Activities) LIKE CONCAT('%', activity, '%');")
+                   "ON LOWER(activities) LIKE CONCAT('%', activity, '%');")
 
 act_course = sqldf(act_query) |> data.table()
 
@@ -113,14 +113,14 @@ fwrite(act_course, 'data/tables/course_activity.csv')
 
 cl_replace = data.table(string=c(';', '\\.$'), replacement=c(', ', ''))
 
-cl_wide = desc[Cross_Listing!='', .(cn, Cross_Listing)]
+cl_wide = desc[cross_listing!='', .(cn, cross_listing)]
 
-cl_wide[, Cross_Listing:=toupper(Cross_Listing)]
+cl_wide[, cross_listing:=toupper(cross_listing)]
 
-cl_wide[, Cross_Listing:=str_multi_replace(Cross_Listing, cl_replace)]
+cl_wide[, cross_listing:=str_multi_replace(cross_listing, cl_replace)]
 
 cl = lapply(1:nrow(cl_wide), function(i) {
-  cn_vec = str_split_1(cl_wide$Cross_Listing[i], ', ')
+  cn_vec = str_split_1(cl_wide$cross_listing[i], ', ')
   
   data.table(cn=cl_wide$cn[i], crosslisted_cn = cn_vec)
 }) |> rbindlist()
@@ -141,10 +141,10 @@ course[, c_n:= paste(subject, number)]
 cns = course[, .(cn, c_n)]
 setnames(cns, names(cns), paste0('prereq_', names(cns)))
 
-desc_prereq = desc[Prerequisites!='', .(cn, Prerequisites)]
+desc_prereq = desc[prerequisites!='', .(cn, prerequisites)]
 
 prereq_query = paste("SELECT cn, prereq_cn FROM desc_prereq INNER JOIN cns",
-                     "ON Prerequisites LIKE CONCAT('%', prereq_c_n, '%');")
+                     "ON prerequisites LIKE CONCAT('%', prereq_c_n, '%');")
 
 course_prereq = sqldf(prereq_query) |> data.table()
 

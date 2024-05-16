@@ -7,9 +7,9 @@ desc = fread('data/course_descriptions.csv')
 
 # Prereqs -----------------------------------------------------------------
 
-pr = desc[Prerequisites!='', .(cn, Prerequisites)]
+pr = desc[prerequisites!='', .(cn, prerequisites)]
 
-pr[, prereqs:=tolower(Prerequisites)]
+pr[, prereqs:=tolower(prerequisites)]
 
 pr[,":="(instructor_consent=grepl('consent', prereqs),
          upper_division=grepl('upper division', prereqs),
@@ -17,4 +17,4 @@ pr[,":="(instructor_consent=grepl('consent', prereqs),
 
 # Enrollment restrictions -------------------------------------------------
 
-er = desc[, .(cn, Restrictions)]
+er = desc[, .(cn, restrictions)]
