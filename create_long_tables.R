@@ -98,6 +98,10 @@ act_query <- paste("SELECT cn, activity_id ",
 
 act_course = sqldf(act_query) |> data.table()
 
+setorderv(act_course)
+
+act_course[, course_activity_id:=1:nrow(act_course)]
+
 fwrite(act_course, 'data/tables/course_activity.csv')
 
 # Create crosslisting -----------------------------------------------------
