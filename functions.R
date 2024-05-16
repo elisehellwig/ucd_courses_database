@@ -38,7 +38,7 @@ remove_duplicates = function(v) {
   v[is_unique]
 }
 
-desc_to_df = function(v, cn, label_patterns, split_pattern=':') {
+.desc_to_df = function(v, cn, label_patterns, split_pattern=':') {
   require(stringr)
   require(data.table)
   
@@ -70,7 +70,7 @@ parse_description = function(course_df, label_patterns) {
   desc_groups = strsplit(course_df$description, '<>\r\n', fixed=TRUE)
   
   df_list = lapply(1:nrow(course_df), function(i) {
-    desc_to_df(desc_groups[[i]], course_df$cn[i], label_patterns)
+    .desc_to_df(desc_groups[[i]], course_df$cn[i], label_patterns)
   })
   desc_df = rbindlist(df_list)
   
