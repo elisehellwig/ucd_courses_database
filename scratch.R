@@ -136,7 +136,12 @@ parse_toggle = function(x, group_names) {
 }
 
 parse_activities = function(chr, activity) {
-  start = str_locate(chr, activity)[, 2]
+  activities = str_split(chr, ',')
+  
+  
+  ids = sapply(activities, function(vec) {
+    grep(activity, )
+  })
   
   hrs = str_sub(chr, start+2, start+2) |> as.numeric()
   
