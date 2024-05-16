@@ -3,7 +3,7 @@ library('data.table')
 library('stringr')
 library('sqldf')
 
-source('functions.R')
+source('R/functions.R')
 #import_courses
 #str_multi_replace
 #strsplit_vector

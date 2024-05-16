@@ -1,7 +1,7 @@
 library('readxl')
 library('data.table')
 
-source('functions.R')
+source('R/functions.R')
 
 
 # Read In -----------------------------------------------------------------

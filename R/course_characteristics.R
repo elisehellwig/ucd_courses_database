@@ -3,7 +3,7 @@ library('data.table')
 library('stringr')
 library('sqldf')
 
-source('functions.R')
+source('R/functions.R')
 
 # read in -----------------------------------------------------------------
 
