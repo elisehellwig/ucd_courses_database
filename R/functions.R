@@ -1,4 +1,4 @@
-import_courses = function(fn) {
+import_courses = function(fn='data/Banner_ActiveCourses_descriptions_20240510.xlsx') {
   require(readxl)
   require(data.table)
   
