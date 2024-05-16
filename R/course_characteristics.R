@@ -5,8 +5,6 @@ library('sqldf')
 
 source('functions.R')
 
-course_fn = 'data/Banner_ActiveCourses_descriptions_20240510.xlsx'
-
 # read in -----------------------------------------------------------------
 
 recode_grade = fread('data/grade_recode.csv')

@@ -1,20 +1,14 @@
 library('readxl')
 library('data.table')
 
+source('functions.R')
+
 
 # Read In -----------------------------------------------------------------
 
 colleges = fread('data/tables/colleges.csv')
 
-course = read_xlsx('data/Banner_ActiveCourses_descriptions_20240510.xlsx')
-setDT(course)
-
-df_names = c('Subject', 'Number', 'Status', 'Effective_Term', 'Dept', 
-             'Dept_Name', 'College', 'Title', 'Long_Title', 'Units',
-             'If_variable', 'Units_High', 'Description') |> tolower()
-
-setnames(course, names(course), df_names)
-
+course = import_courses()
 
 
 # Departments -------------------------------------------------------------

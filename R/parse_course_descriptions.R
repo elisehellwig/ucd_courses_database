@@ -7,14 +7,12 @@ source('functions.R')
 #import_courses
 #parse_description
 
-course_fn = 'data/Banner_ActiveCourses_descriptions_20240510.xlsx'
-
 # read in -----------------------------------------------------------------
 
 groups = fread('data/description_categories.csv')
 recode_cats = fread('data/label_recode.csv')
 
-course = import_courses(course_fn)
+course = import_courses()
 
 # Parse Description -------------------------------------------------------
 

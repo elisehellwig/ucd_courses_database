@@ -15,9 +15,7 @@ final_course_vars = c('cn', 'subject', 'title', 'long_title', 'units',
 
 # Read In -----------------------------------------------------------------
 
-course_fn = 'data/Banner_ActiveCourses_descriptions_20240510.xlsx'
-
-course = import_courses(course_fn)
+course = import_courses()
 
 chars = fread('data/course_characteristics.csv')
 
