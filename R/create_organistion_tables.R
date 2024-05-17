@@ -23,17 +23,19 @@ course = fread('data/courses_clean.csv')
 
 # add data to college_type ------------------------------------------------
 
-dbAppendTable(con, 'college_type', college_type)
+append_table(con, 'college_type', college_type)
 
 
 # Add college Data --------------------------------------------------------
 
 ct = dbGetQuery(con, 'SELECT * FROM college_type;')
+setnames(ct, 'id', 'college_type_id')
+
 
 colleges = merge(colleges, ct, by = 'college_type', all=TRUE) |>
   subset(select = -college_type)
 
-dbAppendTable(con, 'college', colleges)
+append_table(con, 'college', colleges)
 
 # Departments -------------------------------------------------------------
 
@@ -44,17 +46,17 @@ setorderv(depts, cols='dept')
 
 depts[, grad_group:= grepl('GG$', dept_name)]
 
-dbAppendTable(con, 'department', depts)
+append_table(con, 'department', depts)
 
 
 # Subjects ----------------------------------------------------------------
 
 subj0 = course[, .(college, dept, subject)] |> unique()
 
-dp = dbGetQuery(con, 'SELECT * FROM department;')
-co = dbGetQuery(con, 'SELECT * FROM college;')
+dp = dbGetQuery(con, 'SELECT dept, id AS dept_id FROM department;')
+co = dbGetQuery(con, 'SELECT college, id AS college_id FROM college;')
 
-subj_dept = merge(subj0, dp[, c('dept', 'dept_id')],  by = 'dept')
+subj_dept = merge(subj0, dp,  by = 'dept')
 
 subj_col = merge( subj_dept, co, by = 'college')
 
@@ -62,6 +64,6 @@ setorderv(subj_col, cols='subject')
 
 subj = subj_col[, .(subject, dept_id, college_id)]
 
-dbAppendTable(con, 'subject', subj)
+append_table(con, 'subject', subj)
 
 
