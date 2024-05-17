@@ -47,3 +47,27 @@ append_table = function(conn, tablename, df, id_col='id') {
   
   
 }
+
+read_table = function(con, tablename, cols='*', limit=NA, dt=TRUE) {
+  
+  cols = paste0(cols, collapse = ', ')
+  
+  query = paste('SELECT', cols, 'FROM', tablename)
+  
+  if (!is.na(limit)) {
+    query = paste0(query, ' LIMIT ', limit, ';')
+  } else {
+    query = paste0(query, ';')
+  }
+  
+  df = dbGetQuery(con, query)
+  
+  if (dt) {
+    setDT(df)
+  }
+  
+  return(df)
+}
+
+
+
