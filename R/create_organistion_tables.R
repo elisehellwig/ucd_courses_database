@@ -19,7 +19,7 @@ dbDisconnect(con)
 colleges = fread('data/tables/colleges.csv')
 college_type = fread('data/tables/college_type.csv')
 
-course = import_courses()
+course = fread('data/courses_clean.csv')
 
 # add data to college_type ------------------------------------------------
 
@@ -35,7 +35,6 @@ colleges = merge(colleges, ct, by = 'college_type', all=TRUE) |>
 
 dbAppendTable(con, 'college', colleges)
 
-
 # Departments -------------------------------------------------------------
 
 depts = course[, .(dept, dept_name )] |>
@@ -46,6 +45,7 @@ setorderv(depts, cols='dept')
 depts[, grad_group:= grepl('GG$', dept_name)]
 
 dbAppendTable(con, 'department', depts)
+
 
 # Subjects ----------------------------------------------------------------
 
@@ -63,4 +63,5 @@ setorderv(subj_col, cols='subject')
 subj = subj_col[, .(subject, dept_id, college_id)]
 
 dbAppendTable(con, 'subject', subj)
+
 
