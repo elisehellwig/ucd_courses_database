@@ -19,7 +19,8 @@ course[dept_name == 'Psychology', dept:='PSYC']
 
 course[dept == 'ENGL', ":=" (dept='ENGH', dept_name='English')]
 
-
+course[subject=='ECS' & number=='119', 
+       ":="(dept='CSCI', dept_name='Computer Science')]
 # Parse Course Description ------------------------------------------------
 
 desc_long = parse_description(course, groups$pattern)
