@@ -32,12 +32,12 @@ grades = grades[order(grade_type)]
 
 grades[, is_letter := grepl('Letter', grade_type)]
 
-dbAppendTable(con, 'grade_type', grades)
+append_table(con, 'grade_type', grades)
 
 
 # Restriction Type --------------------------------------------------------
 
-dbAppendTable(con, 'restriction_type', restr_type)
+append_table(con, 'restriction_type', restr_type)
 
 
 
@@ -62,7 +62,7 @@ GEs = GEs[ge_code !='']
 
 setorderv(GEs, cols='ge_name')
 
-dbAppendTable(con, 'gen_ed', GEs)
+append_table(con, 'gen_ed', GEs)
 
 
 
@@ -91,7 +91,7 @@ acts = remove_duplicates(acts) |> sort()
 
 learning_activity = data.table(activity = acts)
 
-dbAppendTable(con, 'learning_activity', learning_activity)
+append_table(con, 'learning_activity', learning_activity)
 
 #dbSendQuery(con, 'DELETE FROM learning_activity WHERE activity_id > 26;')
 
