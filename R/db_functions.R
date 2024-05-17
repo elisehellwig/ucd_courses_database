@@ -20,7 +20,9 @@ append_table = function(conn, tablename, df, id_col='id') {
   if (!is.na(id_col)) {
     q = paste('SELECT', id_col,'AS id FROM', tablename, ';')
     
-    ids = dbGetQuery(conn, q)$id
+    tbl = dbGetQuery(conn, q)
+    
+    ids = tbl$id
     
     if (length(ids)==0) {
       max_id = 0
@@ -29,8 +31,17 @@ append_table = function(conn, tablename, df, id_col='id') {
     }
     
     df[, id_col] = (max_id + 1):(max_id + nrow(df))
+    
+  } else {
+    
+    q = paste('SELECT * FROM', tablename, ' LIMIT 10;')
+    
+    tbl = dbGetQuery(conn, q)
+    
   }
   
+  
+  setcolorder(df, names(tbl))
   
   dbAppendTable(conn, tablename, df)
   
