@@ -1,14 +1,43 @@
 library('readxl')
 library('data.table')
+library('DBI')
+library('RPostgres')
+
 
 source('R/functions.R')
 
 
+# Connect to database -----------------------------------------------------
+
+con <- dbConnect(RPostgres::Postgres(),
+                 dbname = "ucd_courses",
+                 host = "localhost",
+                 port = 5432,
+                 user = "elisehellwig",
+                 password = "SanDimas1987")
+
+dbDisconnect(con)
+
 # Read In -----------------------------------------------------------------
 
 colleges = fread('data/tables/colleges.csv')
+college_type = fread('data/tables/college_type.csv')
 
 course = import_courses()
+
+# add data to college_type ------------------------------------------------
+
+dbAppendTable(con, 'college_type', college_type)
+
+
+# Add college Data --------------------------------------------------------
+
+ct = dbGetQuery(con, 'SELECT * FROM college_type;')
+
+colleges = merge(colleges, ct, by = 'college_type', all=TRUE) |>
+  subset(select = -college_type)
+
+dbAppendTable(con, 'college', colleges)
 
 
 # Departments -------------------------------------------------------------
@@ -18,26 +47,24 @@ depts = course[, .(dept, dept_name )] |>
 
 setorderv(depts, cols='dept')
 
-depts[, ":="(dept_id = 1:nrow(depts),
-             grad_group = grepl('GG$', dept_name))]
+depts[, grad_group:= grepl('GG$', dept_name)]
 
-setcolorder(depts, 'dept_id')
-
-fwrite(depts, 'data/tables/department.csv')
+dbAppendTable(con, 'department', depts)
 
 # Subjects ----------------------------------------------------------------
 
 subj0 = course[, .(college, dept, subject)] |> unique()
 
-subj_dept = merge(depts[, dept, dept_id], subj0, by = 'dept')
+dp = dbGetQuery(con, 'SELECT * FROM department;')
+co = dbGetQuery(con, 'SELECT * FROM college;')
 
-subj_col = merge(colleges, subj_dept, by = 'college')
+subj_dept = merge(subj0, dp[, c('dept', 'dept_id')],  by = 'dept')
+
+subj_col = merge( subj_dept, co, by = 'college')
 
 setorderv(subj_col, cols='subject')
 
-subj_col[, subj_id := 1:nrow(subj_col)]
+subj = subj_col[, .(subject, dept_id, college_id)]
 
-subj = subj_col[, .(subj_id, subject, dept_id, college_id)]
-
-fwrite(subj, 'data/tables/subject.csv')
+dbAppendTable(con, 'subject', subj)
 
