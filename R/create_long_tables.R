@@ -13,30 +13,6 @@ desc = fread('data/course_descriptions.csv')
 
 course = import_courses()
 
-# Create GE table ---------------------------------------------------------
-
-ge_replace = data.table(string=c('\\),', ' or '), replacement=c('\\);', '; '))
-
-GEs = desc$gen_ed[!is.na(desc$gen_ed)] |>
-  str_multi_replace(ge_replace) |>
-  strsplit_vector(';') |>
-  str_replace_all('\\.', '') |>
-  trimws() |>
-  unique() |>
-  str_replace_all('\\)', '') |>
-  str_split_fixed(' \\(', 2) |>
-  data.table()
-
-setnames(GEs, names(GEs), c('ge_name', 'ge_code'))
-
-GEs = GEs[ge_code !='']
-
-GEs = GEs[order(GEs$ge_name)]
-GEs[,ge_id:= 1:nrow(GEs)]
-
-fwrite(GEs, 'data/tables/ge.csv')
-
-
 # Create GE course table --------------------------------------------------
 
 
