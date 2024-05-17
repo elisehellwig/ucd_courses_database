@@ -16,14 +16,23 @@ con <- ucd_course_connect('elisehellwig')
 
 # Load Data ---------------------------------------------------------------
 
-grade_type = fread('data/tables/grade_type.csv')
+recode_grade = fread('data/grade_recode.csv')
 restr_type = fread('data/tables/restriction_type.csv', sep=',')
 course = fread('data/courses_clean.csv')
 desc = fread('data/course_descriptions.csv')
 
 # Grade Type --------------------------------------------------------------
 
-dbAppendTable(con, 'grade_type', grade_type)
+grade_desc = desc[, .(cn, grade)]
+
+grades = recode_grade[, 'grade_type'] |>
+  unique() 
+
+grades = grades[order(grade_type)]
+
+grades[, is_letter := grepl('Letter', grade_type)]
+
+dbAppendTable(con, 'grade_type', grades)
 
 
 # Restriction Type --------------------------------------------------------
