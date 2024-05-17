@@ -76,3 +76,25 @@ parse_description = function(course_df, label_patterns) {
   
   return(desc_df)
 }
+
+is.duplicated = function(v, dup_num=2) {
+  tab = table(v)
+  
+  dups = names(tab)[which(tab>=dup_num)]
+  
+  return(dups)
+}
+
+is.duplicated.df = function(df, var, dup_num=2) {
+  
+  setnames(df, var, 'var')
+  
+  dups = is.duplicated(df[, var], dup_num)
+  
+  df = df[var %in% dups]
+  
+  setnames(df, 'var', var)
+  
+  return(df)
+  
+}
