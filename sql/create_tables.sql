@@ -68,16 +68,27 @@ CREATE TABLE learning_activity (
 );
 
 CREATE TABLE course (
-	course_id VARCHAR() UNIQUE PRIMARY KEY,
-  subj_id VARCHAR(5) NOT NULL,
+	id VARCHAR(10) UNIQUE PRIMARY KEY,
+  subject_id INT REFERENCES subject(id) NOT NULL,
   course_number VARCHAR(5) NOT NULL,
-	title VARCHAR(255) UNIQUE NOT NULL,
-	long_title VARCHAR(255) UNIQUE NOT NULL,
+	title VARCHAR(255) NOT NULL,
+	long_title VARCHAR(255) NOT NULL,
+	units REAL,
 	variable_units Boolean DEFAULT False,
-	units_high INT DEFAULT NULL,
-	grade_id INT NOT NULL,
+	units_high REAL DEFAULT NULL,
+	grade_type_id INT REFERENCES grade_type(id) DEFAULT 2,
 	virtual Boolean DEFAULT False,
 	repeatable Boolean DEFAULT False,
 	effective DATE,
 	active Boolean DEFAULT True
+);
+
+
+CREATE TABLE course_description (
+  course_id VARCHAR(10) PRIMARY KEY REFERENCES course(id),
+  activities TEXT,
+  credit_limit TEXT,
+  prerequisites TEXT,
+  restrictions TEXT,
+  description TEXT
 );
