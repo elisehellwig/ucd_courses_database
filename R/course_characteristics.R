@@ -27,7 +27,7 @@ grades[, ":="(grade_id = 1:nrow(grades),
 
 setcolorder(grades, 'grade_id')
 
-fwrite(grades, 'data/tables/grade.csv')
+fwrite(grades, 'data/tables/grade_type.csv')
 
 
 # Standardize grades ------------------------------------------------------
