@@ -49,18 +49,12 @@ CREATE TABLE subject (
 	PRIMARY KEY(subject_id)
 );
 
-CREATE TABLE subject (
-  subject_id INT GENERATED ALWAYS AS IDENTITY,
-	subject VARCHAR(5) NOT NULL,
-	dept_id INT NOT NULL,
-	college_id INT NOT NULL,
-	PRIMARY KEY(subject_id)
-);
 
 CREATE TABLE gen_ed (
-	ge_id INT PRIMARY KEY,
+	ge_id INT GENERATED ALWAYS AS IDENTITY,
   ge_name VARCHAR(255) NOT NULL,
 	ge_code VARCHAR(5) NOT NULL
+	PRIMARY KEY(ge_id)
 );
 
 CREATE TABLE learning_activity (
