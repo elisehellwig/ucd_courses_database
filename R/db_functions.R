@@ -13,3 +13,26 @@ ucd_course_connect = function(username, hostname = 'localhost') {
   
   return(con)
 }
+
+
+append_table = function(conn, tablename, df, id_col='id') {
+  
+  if (!is.na(id_col)) {
+    q = paste('SELECT', id_col,'AS id FROM', tablename, ';')
+    
+    ids = dbGetQuery(conn, q)$id
+    
+    if (length(ids)==0) {
+      max_id = 0
+    } else {
+      max_id = max(ids)
+    }
+    
+    df[, id_col] = (max_id + 1):(max_id + nrow(df))
+  }
+  
+  
+  dbAppendTable(conn, tablename, df)
+  
+  
+}

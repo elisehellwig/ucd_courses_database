@@ -2,77 +2,73 @@
 -- brew services start postgresql@14
 -- psql postgres
 -- \c ucd_courses
+
 -- DROP TABLE table_name;
 
-ALTER TABLE department
-ADD CONSTRAINT dept_unique UNIQUE (dept, dept_name);
+-- DELTE FROM department;
+
+-- DROP DATABASE ucd_courses WITH (FORCE);
 
 
-CREATE database ucd_courses
+--ALTER TABLE department ADD CONSTRAINT dept_unique UNIQUE (dept, dept_name);
+
+
+CREATE DATABASE ucd_courses;
 
 CREATE TABLE college_type(
-   college_type_id INT GENERATED ALWAYS AS IDENTITY,
-   college_type VARCHAR(255) UNIQUE NOT NULL,
-   PRIMARY KEY(college_type_id)
+   id INT PRIMARY KEY,
+   college_type VARCHAR(255) UNIQUE NOT NULL
 );
 
 CREATE TABLE college (
-	college_id INT GENERATED ALWAYS AS IDENTITY,
-  college VARCHAR(5) NOT NULL,
-	college_name VARCHAR(255) NOT NULL,
-	college_type_id INT REFERENCES college_type(college_type_id) NOT NULL,
-	PRIMARY KEY(college_id),
-	CONSTRAINT college_unique UNIQUE (college, college_name)
+	id INT UNIQUE PRIMARY KEY,
+  college VARCHAR(5) UNIQUE NOT NULL,
+	college_name VARCHAR(255) UNIQUE NOT NULL,
+	college_type_id INT REFERENCES college_type(id) NOT NULL
 );
 
 
 CREATE TABLE department (
-	dept_id INT GENERATED ALWAYS AS IDENTITY,
+	id INT UNIQUE PRIMARY KEY,
   dept VARCHAR(6) NOT NULL,
 	dept_name VARCHAR(255) NOT NULL,
 	grad_group Boolean NOT NULL,
-	PRIMARY KEY(dept_id),
-	CONSTRAINT dept_unique UNIQUE (dept, dept_name)
+	CONSTRAINT dept_unique UNIQUE (id, dept, dept_name)
 );
 
 CREATE TABLE subject (
-	subject_id INT GENERATED ALWAYS AS IDENTITY,
+	id INT UNIQUE PRIMARY KEY,
   subject VARCHAR(5) NOT NULL,
-	dept_id INT REFERENCES department(dept_id) NOT NULL,
-	college_id INT REFERENCES college(college_id) NOT NULL,
-	PRIMARY KEY(subject_id)
+	dept_id INT REFERENCES department(id) NOT NULL,
+	college_id INT REFERENCES college(id) NOT NULL
 );
 
 
 CREATE TABLE restriction_type (
-	restriction_type_id INT GENERATED ALWAYS AS IDENTITY,
-	restriction_type VARCHAR(255) UNIQUE NOT NULL,
-	PRIMARY KEY(restriction_type_id)
+	id INT UNIQUE PRIMARY KEY,
+	restriction_type VARCHAR(255) UNIQUE NOT NULL
 );
 
 CREATE TABLE grade_type (
-	grade_type_id INT GENERATED ALWAYS AS IDENTITY,
+	id INT UNIQUE PRIMARY KEY,
 	grade_type VARCHAR(255) UNIQUE NOT NULL,
-	is_letter Boolean NOT NULL,
-	PRIMARY KEY(grade_type_id)
+	is_letter Boolean NOT NULL
 );
 
 
 CREATE TABLE gen_ed (
-	ge_id INT GENERATED ALWAYS AS IDENTITY,
+	id INT UNIQUE PRIMARY KEY,
   ge_name VARCHAR(255) UNIQUE NOT NULL,
-	ge_code VARCHAR(5) UNIQUE NOT NULL,
-	PRIMARY KEY(ge_id)
+	ge_code VARCHAR(5) UNIQUE NOT NULL
 );
 
 CREATE TABLE learning_activity (
-	activity_id INT GENERATED ALWAYS AS IDENTITY,
-	activity VARCHAR(255) UNIQUE NOT NULL,
-	PRIMARY KEY(activity_id)
+	id INT UNIQUE PRIMARY KEY,
+	activity VARCHAR(255) UNIQUE NOT NULL
 );
 
 CREATE TABLE course (
-	course_id VARCHAR() PRIMARY KEY,
+	course_id VARCHAR() UNIQUE PRIMARY KEY,
   subj_id VARCHAR(5) NOT NULL,
   course_number VARCHAR(5) NOT NULL,
 	title VARCHAR(255) UNIQUE NOT NULL,
