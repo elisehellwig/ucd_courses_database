@@ -10,7 +10,7 @@
 -- DROP DATABASE ucd_courses WITH (FORCE);
 
 
---ALTER TABLE department ADD CONSTRAINT dept_unique UNIQUE (dept, dept_name);
+--ALTER TABLE restriction ADD CONSTRAINT restr_unique UNIQUE (id, restriction);
 
 
 CREATE DATABASE ucd_courses;
@@ -118,10 +118,15 @@ CREATE TABLE course_prerequisite (
   prerequisite_course_id VARCHAR(10) 
 );
 
+CREATE TABLE restriction (
+  id INT PRIMARY KEY,
+  restriction VARCHAR(255)
+);
+
 CREATE TABLE course_restriction (
   id INT PRIMARY KEY,
   course_id VARCHAR(10) REFERENCES course(id),
-  restriction VARCHAR(10), 
+  restriction_id INT REFERENCES restriction(id), 
   restriction_type_id INT REFERENCES restriction_type(id)
 );
 
