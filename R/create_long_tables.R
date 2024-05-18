@@ -1,95 +1,67 @@
-library('readxl')
 library('data.table')
 library('stringr')
 library('sqldf')
+library('DBI')
+library('RPostgres')
 
 source('R/functions.R')
+source('R/db_functions.R')
+
 #import_courses
 #str_multi_replace
 #strsplit_vector
 #remove_duplicates
 
-desc = fread('data/course_descriptions.csv')
+con = ucd_course_connect('elisehellwig')
 
-course = import_courses()
+pre_q = paste('SELECT subject, course_id, course_number, prerequisites',
+              'FROM subject INNER JOIN (course_description INNER JOIN course',
+              'ON course_description.course_id = course.id)',
+              'ON subject.id = course.subject_id;')
+
+# Read In -----------------------------------------------------------------
+
+desc = fread('data/course_descriptions.csv')
+setnames(desc, 'cn', 'course_id')
+
+ge = read_table(con, 'gen_ed')
+setnames(ge, 'id', 'ge_id')
+
+learning_activites = read_table(con, 'learning_activity')
+setnames(learning_activites, 'id', 'activity_id')
+
+prereq = dbGetQuery(con, pre_q)
+setDT(prereq)
 
 # Create GE course table --------------------------------------------------
 
+desc_ge = desc[ , .(course_id, gen_ed)]
 
-desc_ge = desc[ , .(cn, gen_ed)]
-
-ge_query <- paste("SELECT cn, ge_id FROM desc_ge INNER JOIN GEs",
+ge_query <- paste("SELECT course_id, ge_id FROM desc_ge INNER JOIN ge",
                   "ON gen_ed LIKE CONCAT('%', ge_name, '%');")
 
 ge_course = sqldf(ge_query) |> data.table()
 
-ge_course[,course_ge_id:= 1:nrow(ge_course)]
-
-fwrite(ge_course, 'data/tables/course_ge.csv')
-
-# ge_course = fuzzy_join(desc_ge, GEs, by= c('Gen_Ed' = 'ge_name'), 
-#                        match_fun = str_detect, mode='inner') 
-# 
-# ge_course = ge_course[, c('cn', 'ge_id')]
-
-
-# Correct Misspellings ----------------------------------------------------
-
-act_misspell = data.table(string=c('Discusson', 'Intership'), 
-                          replacement=c('Discussion', 'Internship'))
-
-desc[, activities:= str_multi_replace(activities, act_misspell)]
-
-# Create Learning Activities Table ----------------------------------------
-
-
-act_remove = c('hour\\(s\\)', 'hour\\(s\\(', 'hour \\(s\\)', 'hours\\(s\\)',
-               '[0-9,\\.\\-]')
-
-act_replace = data.table(string=c(act_remove, '\\s\\s+'), 
-                         replacement = c(rep('', length(act_remove)), ' '))
-
-acts = desc$activities[!is.na(desc$activities)] |>
-  tolower() |>
-  strsplit_vector('[,;\\] ') |>
-  strsplit_vector('/') |>
-  str_multi_replace(act_replace) |>
-  str_replace_all('[\\s]', ' ') |>
-  trimws() |>
-  unique()
-
-good_acts =  acts!='' & !grepl('\\)', acts) & !grepl('consent', acts) 
-
-acts = acts[good_acts]
-
-acts = remove_duplicates(acts) |> sort()
-
-learning_activity = data.table(activity_id = 1:length(acts),
-                               activity = acts)
-
-fwrite(learning_activity, 'data/tables/learning_activity.csv')
+append_table(con, 'course_gen_ed', ge_course)
 
 
 # Create course activity table --------------------------------------------
 
-
-act_query <- paste("SELECT cn, activity_id ",
-                   "FROM desc INNER JOIN learning_activity",
+act_query <- paste("SELECT course_id, activity_id ",
+                   "FROM desc INNER JOIN learning_activites",
                    "ON LOWER(activities) LIKE CONCAT('%', activity, '%');")
 
 act_course = sqldf(act_query) |> data.table()
 
 setorderv(act_course)
 
-act_course[, course_activity_id:=1:nrow(act_course)]
-
-fwrite(act_course, 'data/tables/course_activity.csv')
+append_table(con, 'course_activity', act_course)
 
 # Create crosslisting -----------------------------------------------------
 
 cl_replace = data.table(string=c(';', '\\.$'), replacement=c(', ', ''))
 
-cl_wide = desc[cross_listing!='', .(cn, cross_listing)]
+cl_wide = desc[!is.na(cross_listing), .(course_id, cross_listing)]
 
 cl_wide[, cross_listing:=toupper(cross_listing)]
 
@@ -98,37 +70,33 @@ cl_wide[, cross_listing:=str_multi_replace(cross_listing, cl_replace)]
 cl = lapply(1:nrow(cl_wide), function(i) {
   cn_vec = str_split_1(cl_wide$cross_listing[i], ', ')
   
-  data.table(cn=cl_wide$cn[i], crosslisted_cn = cn_vec)
+  data.table(course_id=cl_wide$course_id[i], crosslist_course_id = cn_vec)
 }) |> rbindlist()
 
-cl[, crosslisted_cn:=gsub(' ', '', crosslisted_cn)]
+cl[, crosslist_course_id:=gsub(' ', '', crosslist_course_id)]
+
+cl = cl[!crosslist_course_id %in% c("CTS012", "PSC12Y")]
 
 setorderv(cl)
 
-cl[, crosslist_id:= 1:nrow(cl)]
-
-setcolorder(cl, 'crosslist_id')
-
-fwrite(cl, 'data/tables/course_crosslist.csv')
+append_table(con, 'course_crosslist', cl)
 
 # Prerequisities Table ----------------------------------------------------
 
-course[, c_n:= paste(subject, number)]
-cns = course[, .(cn, c_n)]
-setnames(cns, names(cns), paste0('prereq_', names(cns)))
+prereq[, c_n:= paste(subject, course_number)]
 
-desc_prereq = desc[prerequisites!='', .(cn, prerequisites)]
+cns = prereq[, .(course_id, c_n)]
+setnames(cns, names(cns), paste0('prerequisite_', names(cns)))
 
-prereq_query = paste("SELECT cn, prereq_cn FROM desc_prereq INNER JOIN cns",
-                     "ON prerequisites LIKE CONCAT('%', prereq_c_n, '%');")
+prereqs = prereq[!is.na(prerequisites), .(course_id, prerequisites)]
+
+prereq_query = paste("SELECT course_id, prerequisite_course_id",
+                     "FROM prereqs INNER JOIN cns",
+                     "ON prerequisites LIKE CONCAT('%', prerequisite_c_n, '%');")
 
 course_prereq = sqldf(prereq_query) |> data.table()
 
 setorderv(course_prereq)
 
-course_prereq[, prereq_id:=1:nrow(course_prereq)]
-
-setcolorder(course_prereq, 'prereq_id')
-
-fwrite(course_prereq, 'data/tables/course_prerequisite.csv')
+append_table(con, 'course_prerequisite', course_prereq)
 
