@@ -100,3 +100,7 @@ setorderv(course_prereq)
 
 append_table(con, 'course_prerequisite', course_prereq)
 
+
+# Disconnect --------------------------------------------------------------
+
+dbDisconnect(con)
