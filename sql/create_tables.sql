@@ -92,3 +92,36 @@ CREATE TABLE course_description (
   restrictions TEXT,
   description TEXT
 );
+
+CREATE TABLE course_gen_ed (
+  id INT PRIMARY KEY,
+  course_id VARCHAR(10) REFERENCES course(id),
+  ge_id INT REFERENCES gen_ed(id)
+);
+
+
+CREATE TABLE course_activity (
+  id INT PRIMARY KEY,
+  course_id VARCHAR(10) REFERENCES course(id),
+  activity_id INT REFERENCES learning_activity(id)
+);
+
+CREATE TABLE course_crosslist (
+  id INT PRIMARY KEY,
+  course_id VARCHAR(10) REFERENCES course(id),
+  crosslist_course_id VARCHAR(10) 
+);
+
+CREATE TABLE course_prerequisite (
+  id INT PRIMARY KEY,
+  course_id VARCHAR(10) REFERENCES course(id),
+  prerequisite_course_id VARCHAR(10) 
+);
+
+CREATE TABLE course_restriction (
+  id INT PRIMARY KEY,
+  course_id VARCHAR(10) REFERENCES course(id),
+  restriction VARCHAR(10), 
+  restriction_type_id INT REFERENCES restriction_type(id)
+);
+
