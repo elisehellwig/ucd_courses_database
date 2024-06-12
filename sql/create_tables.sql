@@ -5,12 +5,14 @@
 
 -- DROP TABLE table_name;
 
--- DELTE FROM department;
+-- DELETE FROM department;
 
 -- DROP DATABASE ucd_courses WITH (FORCE);
 
 
 --ALTER TABLE restriction ADD CONSTRAINT restr_unique UNIQUE (id, restriction);
+
+-- quit
 
 
 CREATE DATABASE ucd_courses;
@@ -67,6 +69,13 @@ CREATE TABLE learning_activity (
 	activity VARCHAR(255) UNIQUE NOT NULL
 );
 
+CREATE TABLE instructor (
+	id INT UNIQUE PRIMARY KEY,
+	first_name VARCHAR(255),
+	last_name VARCHAR(255) NOT NULL
+);
+
+
 CREATE TABLE course (
 	id VARCHAR(10) UNIQUE PRIMARY KEY,
   subject_id INT REFERENCES subject(id) NOT NULL,
@@ -118,6 +127,20 @@ CREATE TABLE course_prerequisite (
   prerequisite_course_id VARCHAR(10) 
 );
 
+CREATE TABLE course_schedule (
+  id INT PRIMARY KEY,
+  course_id VARCHAR(10) REFERENCES course(id) NOT NULL,
+  term INT NOT NULL
+);
+
+
+CREATE TABLE instructor_schedule (
+  id INT PRIMARY KEY,
+  schedule_id INT REFERENCES course_schedule(id) NOT NULL,
+  instructor_id INT REFERENCES instructor(id) NOT NULL
+);
+
+
 CREATE TABLE restriction (
   id INT PRIMARY KEY,
   restriction VARCHAR(255)
@@ -129,4 +152,5 @@ CREATE TABLE course_restriction (
   restriction_id INT REFERENCES restriction(id), 
   restriction_type_id INT REFERENCES restriction_type(id)
 );
+
 
