@@ -1,18 +1,14 @@
-import_courses = function(fn='data/Banner_ActiveCourses_descriptions_20240510.xlsx') {
-  require(readxl)
-  require(data.table)
-  
-  df_names = c('subject', 'number', 'status', 'effective_term', 'dept', 
-               'dept_name', 'college', 'title', 'long_title', 'units',
-               'if_variable', 'units_high', 'description')
+import_courses = function(fn, var_names, sheet=1) {
+  require('readxl')
+  require('data.table')
   
   
-  df = read_xlsx(fn)
+  df = read_xlsx(fn, sheet=sheet)
   setDT(df)
   
-  setnames(df, names(df), df_names)
+  setnames(df, names(df), var_names)
   
-  df[, cn:=paste0(subject, number)]
+  #df[, cn:=paste0(subject, number)]
   
   return(df)
 }
@@ -97,4 +93,23 @@ is.duplicated.df = function(df, var, dup_num=2) {
   
   return(df)
   
+}
+
+
+multi_grepl = function(v, regexes, fun='any') {
+  tf_mat = sapply(regexes, function(r) {
+    grepl(r, v)
+  })
+  
+  tf = apply(tf_mat, 1, fun)
+  
+  return(tf)
+}
+
+multi_gsub = function(v, strings) {
+  for (i in 1:length(strings)) {
+    v = gsub(names(strings)[i], strings[i], v)
+  }
+  
+  return(v)
 }
